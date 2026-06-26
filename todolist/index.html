@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Just To-Do list</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #fcffb9 100%);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .todo-container {
+      background-color: #ffdbb0;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      width: 500px;
+      max-width: 500px;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #333;
+      text-align: center;
+    }
+
+    .input-section {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #task-text {
+      flex: 2;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #task-date {
+      flex: 1;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      outline: none;
+    }
+
+    #task-text:focus, #task-date:focus {
+      border-color: #504a00;
+    }
+
+    #add-btn {
+      background-color: #ad7600;
+      color: white;
+      border: none;
+      padding: 0 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    #add-btn:hover {
+      background-color: #5e4000;
+    }
+
+    /* Empty Placeholder Style */
+    #empty-state {
+      text-align: center;
+      padding: 30px 10px;
+      color: #777;
+      font-style: italic;
+    }
+
+    .todo-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #f9f9f9;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      border-left: 4px solid #3498db;
+      transition: all 0.2s ease;
+    }
+
+    .todo-item.completed {
+      border-left-color: #2ecc71;
+      background: #f0fbf4;
+      opacity: 0.7;
+    }
+
+    .todo-text-container {
+      flex: 1;
+      margin-left: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .todo-text {
+      font-size: 14px;
+      color: #333;
+      cursor: pointer;
+    }
+
+    .todo-date {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .todo-item.completed .todo-text {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .delete-btn {
+      background-color: transparent;
+      color: #e74c3c;
+      border: none;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 5px;
+      font-weight: bold;
+    }
+
+    .delete-btn:hover {
+      color: #c0392b;
+    }
+
+    .checkbox {
+      cursor: pointer;
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+    <link rel="icon" type="image/x-icon" href="iconT.ico">
+</head>
+<body>
+  
+    <div class="todo-container">
+        <h2>My Tasks</h2>
+
+        <div class="input-section">
+            <input type="text" id="task-text" placeholder="What needs to be done?">
+            <input type="date" id="task-date">
+            <button id="add-btn" onclick="addTodo()">Add</button>
+        </div>
+
+        <div id="empty-state">All caught up! Add a task to get started.</div>
+
+        <ul id="todo-list" class="todo-list"></ul>
+
+  <script>
+    let todos = JSON.parse(localStorage.getItem("todos")) || [];
+
+    renderTodos();
+
+    function addTodo() {
+      const textInput = document.getElementById("task-text");
+      const dateInput = document.getElementById("task-date");
+      
+      const text = textInput.value.trim();
+      const dateValue = dateInput.value;
+
+      if (text === "") {
+        alert("Please enter a task!");
+        return;
+      }
+
+      let formattedDate = "";
+      if (dateValue) {
+        const d = new Date(dateValue);
+        formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      }
+
+      const newTodo = {
+        id: Date.now(),
+        text: text,
+        date: formattedDate,
+        completed: false
+      };
+
+      todos.push(newTodo);
+      saveAndRender();
+      
+      // clear
+      textInput.value = ""; 
+      dateInput.value = "";
+    }
+
+    function toggleTodo(id) {
+      todos = todos.map(todo => {
+        if (todo.id === id) {
+          return { ...todo, completed: !todo.completed };
+        }
+        return todo;
+      });
+      saveAndRender();
+    }
+
+    function deleteTodo(id) {
+      todos = todos.filter(todo => todo.id !== id);
+      saveAndRender();
+    }
+
+    function saveAndRender() {
+      localStorage.setItem("todos", JSON.stringify(todos));
+      renderTodos();
+    }
+
+    function renderTodos() {
+      const listElement = document.getElementById("todo-list");
+      const emptyState = document.getElementById("empty-state");
+      
+      listElement.innerHTML = ""; 
+
+      const totalTasks = todos.length;
+      
+      if (totalTasks === 0) {
+        emptyState.style.display = "block";
+      } else {
+        emptyState.style.display = "none";
+      }
+
+      todos.forEach(todo => {
+        const li = document.createElement("li");
+        li.className = `todo-item ${todo.completed ? "completed" : ""}`;
+
+        li.innerHTML = `
+          <input type="checkbox" class="checkbox" ${todo.completed ? "checked" : ""} onclick="toggleTodo(${todo.id})">
+          <div class="todo-text-container" onclick="toggleTodo(${todo.id})">
+            <span class="todo-text">${todo.text}</span>
+            ${todo.date ? `<span class="todo-date"> Due: ${todo.date}</span>` : ''}
+          </div>
+          <button class="delete-btn" onclick="deleteTodo(${todo.id})">&times;</button>
+        `;
+
+        listElement.appendChild(li);
+      });
+    }
+
+    document.getElementById("task-text").addEventListener("keypress", function(event) {
+      if (event.key === "Enter") {
+        addTodo();
+      }
+    });
+  </script>
+    </div>
+</body>
+</html>
